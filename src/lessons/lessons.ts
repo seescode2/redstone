@@ -1,7 +1,8 @@
 import {emptyBoard,makeComponent} from '../engine/Engine';import {key,type Board,type ComponentType} from '../models/types';import {allLampsPowered,componentExists,maxComponentCount,type Result} from './validators';
-export interface Lesson{id:string;title:string;description:string;objective:string;constraints:string[];allowed:ComponentType[];board:Board;tests:((b:Board)=>Result)[]}
+export interface Lesson{id:string;title:string;description:string;objective:string;constraints:string[];allowed:ComponentType[];board:Board;solution:Board;tests:((b:Board)=>Result)[]}
 const all:ComponentType[]=['solidBlock','redstoneDust','redstoneTorch','lever','button','repeater','lamp','piston'];
 const board=(pieces:[number,number,ComponentType][])=>{const b=emptyBoard();for(const [x,y,t]of pieces)b.cells[key(x,y)]={x,y,component:makeComponent(t)};return b};
+const solved=(pieces:[number,number,ComponentType][])=>{const b=board(pieces);for(const cell of Object.values(b.cells)){const c=cell.component;if(c?.type==='lever'||c?.type==='button')c.active=true}return b};
 const definitions:[string,string,string,ComponentType[],[number,number,ComponentType][],string[]][]=[
 ['Powering a Lamp','A lever is a persistent source of strength 15.','Place a lever beside the lamp and switch it on.',['lever','lamp'],[[10,5,'lamp']],['Use the provided lamp.']],
 ['Redstone Dust','Dust carries power and loses one level per tile.','Connect the source to the lamp.',['lever','redstoneDust','lamp'],[[3,5,'lever'],[10,5,'lamp']],['Use dust to bridge the gap.']],
@@ -14,4 +15,28 @@ const definitions:[string,string,string,ComponentType[],[number,number,Component
 ['OR Logic','OR is true when either A or B is true.','Let either lever activate one lamp.',['lever','redstoneDust','lamp'],[[10,5,'lamp']],['Use two levers.']],
 ['Simple Timing','Repeaters make state changes visible across simulation ticks.','Set a delay and step until the lamp changes.',['lever','redstoneDust','repeater','lamp'],[[5,5,'lever'],[7,5,'repeater'],[10,5,'lamp']],['Set repeater delay above 1.']]
 ];
-export const lessons:Lesson[]=definitions.map((d,i)=>({id:String(i+1),title:d[0],description:d[1],objective:d[2],allowed:d[3],board:board(d[4]),constraints:d[5],tests:[allLampsPowered,componentExists('lever'),maxComponentCount('repeater',i===3||i===4?1:20)]}));export const allComponents=all;
+const more:[string,string,string,ComponentType[],[number,number,ComponentType][],string[]][]=[
+['Corners','Dust can route a signal around a corner.','Reach the offset lamp with an L-shaped wire.',['lever','redstoneDust','lamp'],[[4,3,'lever'],[10,7,'lamp']],['Keep the path connected.']],
+['Two Lamps','One source can branch into multiple outputs.','Power both lamps from one lever.',['lever','redstoneDust','lamp'],[[12,3,'lamp'],[12,7,'lamp']],['Use exactly one lever.']],
+['A Dust Junction','A dust junction distributes its strongest input.','Build a T junction that lights three lamps.',['lever','redstoneDust','lamp'],[[13,3,'lamp'],[13,5,'lamp'],[13,7,'lamp']],['Branch the dust line.']],
+['Button Pulse','A button produces a short, tick-based pulse.','Use a button to briefly power the lamp.',['button','redstoneDust','lamp'],[[6,5,'button'],[11,5,'lamp']],['Press the button, then step time.']],
+['Piston Power','Pistons extend while receiving power.','Extend the piston with a lever.',['lever','redstoneDust','piston'],[[11,5,'piston']],['The piston does not move blocks in this simulator.']],
+['Remote Piston','Dust lets a control operate machinery at a distance.','Connect the remote lever to the piston.',['lever','redstoneDust','piston'],[[3,5,'lever'],[14,5,'piston']],['Avoid gaps in the wire.']],
+['Repeater Delay','Repeater delay can be adjusted from one to four ticks.','Delay the lamp by four ticks.',['lever','redstoneDust','repeater','lamp'],[[4,5,'lever'],[9,5,'repeater'],[13,5,'lamp']],['Set the repeater delay to 4.']],
+['Signal Booster','Repeaters restore a fading signal to strength 15.','Power a lamp across the full board.',['lever','redstoneDust','repeater','lamp'],[[1,5,'lever'],[19,5,'lamp']],['Use one repeater near the middle.']],
+['One-Way Path','A repeater allows power to travel in only one direction.','Orient a repeater so the source reaches the lamp.',['lever','redstoneDust','repeater','lamp'],[[5,5,'lever'],[9,5,'repeater'],[13,5,'lamp']],['The repeater arrow points toward the output.']],
+['Torch Output','An unpowered torch is itself a source.','Use a torch to power a nearby lamp.',['redstoneTorch','redstoneDust','lamp','lever'],[[12,5,'lamp']],['Leave the torch input off.']],
+['Torch Switch','Powering the back of a torch turns it off.','Create a controllable inverted lamp.',['lever','redstoneTorch','redstoneDust','lamp'],[[5,5,'lever'],[13,5,'lamp']],['Place the torch facing away from its input.']],
+['Inverter Chain','Two NOT gates restore the original Boolean value.','Build a double-inverter path to the lamp.',['lever','redstoneTorch','redstoneDust','lamp'],[[3,5,'lever'],[15,5,'lamp']],['Use two torches.']],
+['OR Junction','Multiple sources may safely feed the same dust line.','Make either of two levers power the output.',['lever','redstoneDust','lamp'],[[13,5,'lamp']],['Use two separated inputs.']],
+['Three-Way OR','OR logic scales to more than two inputs.','Let any of three levers power one lamp.',['lever','redstoneDust','lamp'],[[14,5,'lamp']],['Use three levers.']],
+['Compact Wiring','Short paths are easier to inspect and debug.','Power the lamp using at most three dust pieces.',['lever','redstoneDust','lamp'],[[7,5,'lever'],[12,5,'lamp']],['Use at most 3 dust.']],
+['Block Conduction','A powered solid block emits to neighboring components.','Route power through a solid block.',['lever','solidBlock','redstoneDust','lamp'],[[5,5,'lever'],[8,5,'solidBlock'],[12,5,'lamp']],['The solid block must be part of the path.']],
+['Parallel Outputs','A source can operate a lamp and piston together.','Power both output types from the same control.',['lever','redstoneDust','lamp','piston'],[[13,4,'lamp'],[13,6,'piston']],['Use one lever.']],
+['Pulse Machine','Buttons are useful for momentary machines.','Extend a piston only for the duration of a button pulse.',['button','redstoneDust','piston'],[[4,5,'button'],[13,5,'piston']],['Observe it retract after three ticks.']],
+['Long-Distance Branch','Boost a signal before splitting it.','Power two distant lamps with one repeater.',['lever','redstoneDust','repeater','lamp'],[[18,3,'lamp'],[18,7,'lamp']],['Use no more than 1 repeater.']],
+['Final Circuit','Combine sources, transmission, and branching.','Build a control panel that powers two lamps and a piston.',['lever','redstoneDust','repeater','lamp','piston','solidBlock'],[[17,3,'lamp'],[17,5,'piston'],[17,7,'lamp']],['Use one lever and no more than 2 repeaters.']]
+];
+const entries=[...definitions,...more];
+const solutionFor=(_i:number,d:typeof entries[number])=>{const targets=d[4].filter(([, ,t])=>t==='lamp'||t==='piston');const [tx,ty]=targets[0]??[10,5,'lamp'];const source:ComponentType=d[3].includes('lever')?'lever':d[3].includes('button')?'button':'redstoneTorch';const sx=Math.max(0,tx-4),pieces:[number,number,ComponentType][]=[[sx,ty,source]];for(const [x,y,type]of targets){for(let px=sx+1;px<x;px++)pieces.push([px,ty,'redstoneDust']);for(let py=Math.min(ty,y);py<=Math.max(ty,y);py++)if(py!==ty)pieces.push([x-1,py,'redstoneDust']);pieces.push([x,y,type])}return solved(pieces)};
+export const lessons:Lesson[]=entries.map((d,i)=>({id:String(i+1),title:d[0],description:d[1],objective:d[2],allowed:d[3],board:board(d[4]),solution:solutionFor(i,d),constraints:d[5],tests:[allLampsPowered,componentExists(d[3].includes('lever')?'lever':d[3].includes('button')?'button':'redstoneTorch'),maxComponentCount('repeater',i===3||i===4||i===28?1:20)]}));export const allComponents=all;
