@@ -1,6 +1,6 @@
 # Redstone Academy
 
-A browser-only, 2D educational Minecraft Redstone simulator. It combines a small circuit sandbox with ten guided lessons and live, unit-test-like success criteria. The goal is to expose hidden logical state—not reproduce Minecraft block for block.
+A browser-only, 2D educational Minecraft Redstone simulator. It combines a small circuit sandbox with thirty guided lessons and live, unit-test-like success criteria. The goal is to expose hidden logical state—not reproduce Minecraft block for block.
 
 ## Run locally
 
@@ -28,7 +28,7 @@ React UI → typed Board model → framework-independent Engine
 - A torch's simplified input is the adjacent cell directly behind its arrow. An unpowered input makes it emit 15; a powered input turns it off.
 - Solid blocks use an explicit educational rule: any neighboring valid output powers the block, and a powered block emits 15 to neighbors. This intentionally omits strong/weak power distinctions.
 - Lamps and pistons respond to adjacent valid power. Pistons visualize extension but do not move blocks.
-- Lesson validators inspect the same board state independently, like small unit tests.
+- Every lesson includes a viewable example solution. Lesson validators inspect the same board state independently, like small unit tests.
 
 ## Known simplifications
 
